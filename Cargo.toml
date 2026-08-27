@@ -1,0 +1,22 @@
+[package]
+name = "multi_logging"
+version = "0.1.1"
+edition = "2024"
+description = "一个高性能的 Rust 异步日志库，提供灵活的格式化、多 sink 支持和优秀的并发性能。"
+license = "MIT"
+repository = "https://github.com/gjcufzry/multi_logging"
+documentation = "https://docs.rs/multi_logging"
+keywords = ["log", "logger"]
+readme = "README.md"
+
+[dependencies]
+log = { version = "0.4.33", features = ["std"] }
+crossbeam = "0.8.4"
+time = { version = "0.3.55", features = ["local-offset"] }
+
+[dev-dependencies]
+criterion = { version = "0.8", features = ["html_reports"] }
+
+[[bench]]
+name = "benchmark"
+harness = false
