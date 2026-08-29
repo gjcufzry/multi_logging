@@ -12,7 +12,6 @@ use crossbeam::{
 };
 
 use crate::{
-    GLOBAL_DISPATCHER,
     logger::Logger,
     sink::Sink,
     util::{
@@ -22,6 +21,29 @@ use crate::{
 };
 
 /// 异步的 [`Logger`] 实现。
+///
+/// # Example
+/// ```
+/// use multi_logging::logger::AsyncLogger;
+/// use multi_logging::sink::NullSink;
+/// use multi_logging::log::{self, LevelFilter};
+/// use std::sync::Arc;
+///
+/// let logger = AsyncLogger::builder()
+///     .name("async logger")
+///     .level(LevelFilter::Trace)                  // 过滤等级。
+///     .bound(true)                                // 有界队列。
+///     .chanel_size(1024)                          // 队列大小。
+///     .add_sink(Arc::new(NullSink::new("null")))  // 添加 sink。
+///     .drop_when_blocked(true)                    // 在队列阻塞时是否丢弃日志。
+///     .error_handle(|_| {                         // 设置错误回调。
+///         println!("Error!");
+///         false
+///     })
+///     .build();
+///
+/// log::info!(logger: logger, "Hello world!");
+/// ```
 pub struct AsyncLogger {
     name: Box<str>,
     max_level: AtomicCell<log::LevelFilter>,
@@ -106,7 +128,7 @@ impl AsyncLoggerBuilder {
             name: crate::util::DEFAULT_NULL_NAME.into(),
             level: log::LevelFilter::Off,
             bound: false,
-            chanel_size: 1024,
+            chanel_size: super::DEFAULT_CHANNEL_SIZE,
             sinks: Vec::new(),
             error_handle: None,
             drop_when_blocked: true,
@@ -238,7 +260,9 @@ impl AsyncHandleThread {
         });
 
         // 注册全局句柄。
-        GLOBAL_DISPATCHER.thread_pool.spawn(handle, tx.clone());
+        crate::util::dispatcher::GLOBAL_DISPATCHER
+            .thread_pool
+            .spawn(handle, tx.clone());
 
         tx
     }

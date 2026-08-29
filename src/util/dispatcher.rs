@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    fmt::{Formatter, default::DefaultFormater},
+    fmt::{Formatter, default::DefaultFormatter},
     logger::Logger,
     sink::Sink,
     util::pool::{ObjectPool, ThreadPool},
@@ -19,7 +19,7 @@ pub struct Dispatcher {
     pub(crate) object_pool: ObjectPool,
     pub(crate) loggers: RwLock<HashMap<Box<str>, Arc<dyn Logger>>>,
     pub(crate) sinks: RwLock<HashMap<Box<str>, Arc<dyn Sink>>>,
-    pub(crate) global_formatter: Arc<dyn Formatter>,
+    pub(crate) global_formatter: Arc<DefaultFormatter>,
 }
 
 impl Dispatcher {
@@ -29,7 +29,7 @@ impl Dispatcher {
             object_pool: ObjectPool::new(),
             loggers: RwLock::new(HashMap::new()),
             sinks: RwLock::new(HashMap::new()),
-            global_formatter: Arc::new(DefaultFormater::default()),
+            global_formatter: Arc::new(DefaultFormatter::default()),
         }
     }
 }
@@ -44,7 +44,7 @@ pub fn exit() {
 
 /// 使用注册 [`Sink`] 实例 的名字寻找对应的对象。
 ///
-/// 如果没有注册到 [`GLOBAL_DISPATCHER`] 或者没有该名字，则返回 [`None`]。
+/// 如果没有注册到 `全局调度器` 或者没有该名字，则返回 [`None`]。
 #[inline]
 pub fn get_sink(name: impl AsRef<str>) -> Option<Arc<dyn Sink>> {
     GLOBAL_DISPATCHER
@@ -57,9 +57,9 @@ pub fn get_sink(name: impl AsRef<str>) -> Option<Arc<dyn Sink>> {
 
 /// 使用注册 [`Sink`] 实例 的名字寻找并删除对应的对象。
 ///
-/// 如果没有注册到 [`GLOBAL_DISPATCHER`] 或者没有该名字，则返回 [`None`]。
+/// 如果没有注册到 `全局调度器` 或者没有该名字，则返回 [`None`]。
 ///
-/// 注意，这么做并不会使得该 sink 被禁用，只是将其从 [`GLOBAL_DISPATCHER`] 中移除。
+/// 注意，这么做并不会使得该 sink 被禁用，只是将其从 `全局调度器` 中移除。
 #[inline]
 pub fn remove_sink(name: impl AsRef<str>) -> Option<Arc<dyn Sink>> {
     GLOBAL_DISPATCHER
@@ -69,7 +69,7 @@ pub fn remove_sink(name: impl AsRef<str>) -> Option<Arc<dyn Sink>> {
         .remove(name.as_ref())
 }
 
-/// 向 [`GLOBAL_DISPATCHER`] 注册一个 [`Sink`] 对象。
+/// 向 `全局调度器` 注册一个 [`Sink`] 对象。
 ///
 /// 如果已有一个同名对象，则将 sink 以 [`Err`] 返回。
 #[inline]
@@ -93,7 +93,7 @@ pub fn register_sink(sink: Arc<dyn Sink>) -> Result<(), Arc<dyn Sink>> {
 
 /// 使用注册 [`Logger`] 实例 的名字寻找对应的对象。
 ///
-/// 如果没有注册到 [`GLOBAL_DISPATCHER`] 或者没有该名字，则返回 [`None`]。
+/// 如果没有注册到 `全局调度器` 或者没有该名字，则返回 [`None`]。
 #[inline]
 pub fn get_logger(name: impl AsRef<str>) -> Option<Arc<dyn Logger>> {
     GLOBAL_DISPATCHER
@@ -106,9 +106,9 @@ pub fn get_logger(name: impl AsRef<str>) -> Option<Arc<dyn Logger>> {
 
 /// 使用注册 [`Logger`] 实例 的名字寻找并删除对应的对象。
 ///
-/// 如果没有注册到 [`GLOBAL_DISPATCHER`] 或者没有该名字，则返回 [`None`]。
+/// 如果没有注册到 `全局调度器` 或者没有该名字，则返回 [`None`]。
 ///
-/// 注意，这么做并不会使得该 logger 被禁用，只是将其从 [`GLOBAL_DISPATCHER`] 中移除。
+/// 注意，这么做并不会使得该 logger 被禁用，只是将其从 `全局调度器` 中移除。
 #[inline]
 pub fn remove_logger(name: impl AsRef<str>) -> Option<Arc<dyn Logger>> {
     GLOBAL_DISPATCHER
@@ -118,7 +118,7 @@ pub fn remove_logger(name: impl AsRef<str>) -> Option<Arc<dyn Logger>> {
         .remove(name.as_ref())
 }
 
-/// 向 [`GLOBAL_DISPATCHER`] 注册一个 [`Sink`] 对象。
+/// 向 `全局调度器` 注册一个 [`Sink`] 对象。
 ///
 /// 如果已有一个同名对象，则将 sink 以 [`Err`] 返回。
 #[inline]
@@ -166,6 +166,6 @@ pub fn set_global_format(pattern: impl AsRef<str>) -> Result<(), super::errors::
 
 /// 获取全局格式化器实例。
 #[inline]
-pub fn get_global_formatter() -> Arc<dyn Formatter> {
+pub fn get_global_formatter() -> Arc<DefaultFormatter> {
     GLOBAL_DISPATCHER.global_formatter.clone()
 }

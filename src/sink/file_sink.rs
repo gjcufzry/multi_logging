@@ -12,6 +12,20 @@ use crate::{
 };
 
 /// 线程安全的、向一个文件输出的 [`Sink`] 实现。
+///
+/// # Example
+/// ```
+/// use multi_logging::sink::FileSinkMT;
+/// use multi_logging::fmt::DefaultFormatter;
+/// use std::sync::Arc;
+///
+/// let sink = FileSinkMT::builder()
+///     .name("file sink")                                // 名字。
+///     .path("app.log")                                  // 打开的文件路径。
+///     .buffer_size(1024 * 16)                           // 缓冲区大小。
+///     .formatter(Arc::new(DefaultFormatter::default())) // 格式化器。
+///     .build();
+/// ```
 #[repr(transparent)]
 pub struct FileSinkMT {
     inner: BaseSink<File, Mutex<()>, AtomicType>,
@@ -24,6 +38,19 @@ pub struct FileSinkMT {
 /// - 这个只能在单线程环境使用（或者使用 [`AsyncLogger`] ，并将后台线程池最大线程数量设置为 1 ），
 ///   任何多线程写入的操作都是未定义行为。
 ///
+/// # Example
+/// ```
+/// use multi_logging::sink::FileSinkST;
+/// use multi_logging::fmt::DefaultFormatter;
+/// use std::sync::Arc;
+///
+/// let sink = FileSinkST::builder()
+///     .name("file sink")                                // 名字。
+///     .path("app.log")                                  // 打开的文件路径。
+///     .buffer_size(1024 * 16)                           // 缓冲区大小。
+///     .formatter(Arc::new(DefaultFormatter::default())) // 格式化器。
+///     .build();
+/// ```
 /// [`AsyncLogger`]: crate::logger::AsyncLogger
 #[repr(transparent)]
 pub struct FileSinkST {

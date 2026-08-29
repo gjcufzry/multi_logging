@@ -6,7 +6,7 @@ use crossbeam::{channel::Sender, queue::ArrayQueue};
 
 use crate::logger::async_logger::LogCommand;
 
-pub const POOL_SIZE: usize = 1024 * 16;
+pub const DEFAULT_POOL_SIZE: usize = 1024 * 16;
 
 /// 全局线程池。
 ///
@@ -53,7 +53,7 @@ impl ObjectPool {
     #[inline(always)]
     pub fn new() -> Self {
         Self {
-            strings: ArrayQueue::new(POOL_SIZE),
+            strings: ArrayQueue::new(DEFAULT_POOL_SIZE),
         }
     }
 

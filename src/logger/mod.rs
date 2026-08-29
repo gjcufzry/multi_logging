@@ -42,3 +42,6 @@ pub trait Logger: Sync + Send {
 include!("./impl_trait_macros.rs");
 
 impl_log_trait!(dyn Logger);
+
+/// [`AsyncLogger`] 的默认日志缓冲区大小。
+pub const DEFAULT_CHANNEL_SIZE: usize = 1024;

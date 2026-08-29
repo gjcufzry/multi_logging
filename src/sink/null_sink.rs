@@ -1,6 +1,18 @@
+//! 空输出 sink。
 use crate::sink::Sink;
 
 /// 一个没有任何输出的 [`Sink`] 实现。
+///
+/// # Example
+/// ```
+/// use multi_logging::sink::NullSink;
+///
+/// let sink = NullSink::new("null sink");
+/// // or
+/// let sink = NullSink::builder()
+///     .name("null sink")
+///     .build();
+/// ```
 pub struct NullSink {
     name: Box<str>,
 }

@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    fmt::{Formatter, GLOBAL_FORMATTER},
+    fmt::Formatter,
     sink::{Sink, SinkResult},
     util::{
         Record,
@@ -15,9 +15,6 @@ use crate::{
         marker::{MaybeAtomicOperation, MaybeAtomicType, MaybeMutexType, NoAtomicType},
     },
 };
-
-/// 默认 [`Sink`] 实现类型的缓冲区大小。
-pub const DEFAULT_SINK_BUFFER_SIZE: usize = 1024 * 1024;
 
 /// 一个基础的、带有缓冲区的 [`Sink`] 实现。
 ///
@@ -108,36 +105,6 @@ where
     Mutex: MaybeMutexType<Inner = ()>,
     Atomic: MaybeAtomicType<log::LevelFilter>,
 {
-    /// 构造一个基础 sink。
-    ///
-    /// 缓冲区大小默认为 [`DEFAULT_SINK_BUFFER_SIZE`]，且格式化器为全局默认格式化器。
-    #[inline]
-    pub fn new(name: impl AsRef<str>, output: Output) -> Self {
-        Self::with_buffer_size(name, output, DEFAULT_SINK_BUFFER_SIZE)
-    }
-
-    /// 指定格式化器创建。
-    ///
-    /// 缓冲区大小默认为 [`DEFAULT_SINK_BUFFER_SIZE`]。
-    #[inline]
-    pub fn with_formatter(
-        name: impl AsRef<str>,
-        output: Output,
-        formatter: Arc<dyn Formatter>,
-    ) -> Self {
-        Self::with_buffer_size_and_formatter(name, output, DEFAULT_SINK_BUFFER_SIZE, formatter)
-    }
-
-    /// 以指定缓冲区大小构造一个基础 sink。
-    ///
-    /// # Note
-    ///
-    /// - 缓冲区不建议过小，最好超过 1024 * 16 字节。
-    #[inline]
-    pub fn with_buffer_size(name: impl AsRef<str>, output: Output, cap: usize) -> Self {
-        Self::with_buffer_size_and_formatter(name, output, cap, GLOBAL_FORMATTER.clone())
-    }
-
     /// 同时指定缓冲区大小与格式化器创建。
     #[inline]
     pub fn with_buffer_size_and_formatter(

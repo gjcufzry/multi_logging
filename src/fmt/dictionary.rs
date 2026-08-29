@@ -208,3 +208,10 @@ pub const YEAR4: [&str; 130] = [
 // 实在太大，不写了。
 // pub static PAD6: [&str; 1_000_000] = [
 // ];
+
+/// 小写形式的 log::Level 字符串显示。
+pub const LOG_LEVEL_NAMES_LOWER: [&str; 6] = ["off", "error", "warn", "info", "debug", "trace"];
+
+/// 默认的日志等级的 ANSI 码。
+pub const DEFAULT_LOG_LEVEL_COLOR: [&str; 5] =
+    ["\x1b[31m", "\x1b[33m", "\x1b[32m", "\x1b[90m", "\x1b[0m"];

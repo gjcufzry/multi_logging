@@ -1,11 +1,11 @@
 //! 提供一些能在多处使用的api。
 //!
 
-pub mod dispatcher;
-pub mod errors;
-pub mod marker;
-pub mod pool;
-pub mod record;
+pub(crate) mod dispatcher;
+pub(crate) mod errors;
+pub(crate) mod marker;
+pub(crate) mod pool;
+pub(crate) mod record;
 
 pub use record::*;
 

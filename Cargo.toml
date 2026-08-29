@@ -1,6 +1,6 @@
 [package]
 name = "multi_logging"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 description = "一个高性能的 Rust 异步日志库，提供灵活的格式化、多 sink 支持和优秀的并发性能。"
 license = "MIT"

@@ -33,4 +33,5 @@ pub trait Sink: Send + Sync {
 /// [`Sink`] 的 [`Result`]返回值 别名。
 pub(crate) type SinkResult<Ret> = Result<Ret, SinkError>;
 
+/// 默认缓冲区大小。
 pub const DEFAULT_BUFFER_SIZE: usize = 1024 * 16;

@@ -9,12 +9,32 @@ use crate::{
 };
 
 /// 线程安全的、向标准错误流输出的 [`Sink`] 实现。
+///
+/// # Example
+/// ```
+/// use multi_logging::sink::StderrSinkMT;
+///
+/// let sink = StderrSinkMT::builder()
+///     .name("stderr sink")
+///     .buffer_size(1024 * 16)
+///     .build();
+/// ```
 #[repr(transparent)]
 pub struct StderrSinkMT {
     inner: BaseSink<Stderr, Mutex<()>, AtomicType>,
 }
 
 /// 线程不安全的、向标准错误流输出的 [`Sink`] 实现。
+///
+/// # Example
+/// ```
+/// use multi_logging::sink::StderrSinkST;
+///
+/// let sink = StderrSinkST::builder()
+///     .name("stderr sink")
+///     .buffer_size(1024 * 16)
+///     .build();
+/// ```
 ///
 /// # Safety
 ///

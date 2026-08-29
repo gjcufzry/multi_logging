@@ -115,6 +115,7 @@ impl ParseError {
             ParseErrorKind::PatternNotFound => {
                 "Expected a pattern character, but the pattern string ended.".to_string()
             }
+            ParseErrorKind::NotANSI => format!("Not ANSI at index {}.", self.offset),
         }
     }
 }
@@ -129,4 +130,5 @@ impl Display for ParseError {
 pub enum ParseErrorKind {
     UnexpectedPattern(char),
     PatternNotFound,
+    NotANSI,
 }
