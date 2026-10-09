@@ -122,7 +122,7 @@ macro_rules! impl_file_sink {
                 Self {
                     name: $crate::util::DEFAULT_NULL_NAME.into(),
                     path: "".into(),
-                    formatter: $crate::util::dispatcher::get_global_formatter(),
+                    formatter: $crate::global::get_global_formatter(),
                     buffer_size: super::DEFAULT_BUFFER_SIZE,
                 }
             }

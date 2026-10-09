@@ -1,0 +1,57 @@
+.\async_bench.exe 100000 10 100000 20
+
+[info] -------------------------------------------------
+[info] Messages     : 100000
+[info] Threads      : 10
+[info] Queue        : 100000 slots
+[info] Queue memory : 100000 x 152 = 14843 KB
+[info] Total iters  : 20
+[info] -------------------------------------------------
+[info]
+[info] *********************************
+[info] Queue Overflow Policy: block
+[info] *********************************
+[info] Elapsed: 0.0314581 secs   3178831/sec
+[info] Elapsed: 0.0310421 secs   3221431/sec
+[info] Elapsed: 0.0308552 secs   3240944/sec
+[info] Elapsed: 0.0312721 secs   3197738/sec
+[info] Elapsed: 0.0306952 secs   3257838/sec
+[info] Elapsed: 0.0312313 secs   3201916/sec
+[info] Elapsed: 0.032295 secs    3096454/sec
+[info] Elapsed: 0.0325433 secs   3072829/sec
+[info] Elapsed: 0.0313122 secs   3193643/sec
+[info] Elapsed: 0.0314763 secs   3176993/sec
+[info] Elapsed: 0.0309357 secs   3232511/sec
+[info] Elapsed: 0.0314036 secs   3184348/sec
+[info] Elapsed: 0.0314593 secs   3178710/sec
+[info] Elapsed: 0.0298333 secs   3351959/sec
+[info] Elapsed: 0.0293861 secs   3402969/sec
+[info] Elapsed: 0.0320768 secs   3117517/sec
+[info] Elapsed: 0.0309895 secs   3226899/sec
+[info] Elapsed: 0.0318394 secs   3140762/sec
+[info] Elapsed: 0.030852 secs    3241280/sec
+[info] Elapsed: 0.0297488 secs   3361480/sec
+[info]
+[info] *********************************
+[info] Queue Overflow Policy: overrun
+[info] *********************************
+[info] Elapsed: 0.0311582 secs   3209428/sec
+[info] Elapsed: 0.0304974 secs   3278968/sec
+[info] Elapsed: 0.0313783 secs   3186915/sec
+[info] Elapsed: 0.0312749 secs   3197452/sec
+[info] Elapsed: 0.0323534 secs   3090865/sec
+[info] Elapsed: 0.0309321 secs   3232887/sec
+[info] Elapsed: 0.0301289 secs   3319072/sec
+[info] Elapsed: 0.03086 secs     3240440/sec
+[info] Elapsed: 0.0307879 secs   3248029/sec
+[info] Elapsed: 0.0308712 secs   3239265/sec
+[info] Elapsed: 0.0304498 secs   3284093/sec
+[info] Elapsed: 0.0305054 secs   3278108/sec
+[info] Elapsed: 0.0320727 secs   3117916/sec
+[info] Elapsed: 0.029445 secs    3396162/sec
+[info] Elapsed: 0.0296792 secs   3369363/sec
+[info] Elapsed: 0.0311442 secs   3210870/sec
+[info] Elapsed: 0.0316467 secs   3159887/sec
+[info] Elapsed: 0.031625 secs    3162055/sec
+[info] Elapsed: 0.0313963 secs   3185088/sec
+[info] Elapsed: 0.0298732 secs   3347482/sec

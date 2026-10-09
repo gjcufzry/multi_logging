@@ -1,12 +1,17 @@
 #![doc = include_str!("../README.md")]
 
 pub mod fmt;
+pub mod global;
 pub mod logger;
 pub mod sink;
 pub(crate) mod util;
 
-pub use crate::util::dispatcher::{
-    exit, get_logger, get_sink, register_logger, register_sink, remove_logger, remove_sink,
-    set_global_format,
-};
 pub use log;
+
+pub use crate::util::Record;
+
+pub mod prelude {
+    pub use crate::sink::Sink;
+    pub use crate::logger::Logger;
+    pub use crate::fmt::Formatter;
+}

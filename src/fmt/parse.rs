@@ -1,22 +1,21 @@
 //! 文本解析。
 
 /// 表示跟在 `%` 后面的单个模式字符的含义。
-/// 
+///
 /// # Detail
-/// 
+///
 /// | 占位符 | 说明 |
 /// |---|---|
 /// | `%v` | 实际的日志消息文本 |
 /// | `%n` | logger 名 |
+/// | `%N` | sink 名 |
 /// | `%l` | 小写日志级别 |
 /// | `%L` | 大写日志级别 |
 /// | `%t` | 线程 ID |
 /// | `%P` | 进程 ID |
-/// | `%@` | 源文件位置 |
+/// | `%@` | 模块路径 |
 /// | `%s` | 源文件名 |
-/// | `%g` | 源文件的短文件名 |
 /// | `%#` | 源码行号 |
-/// | `%!` | 源码函数名 |
 /// | `%Y` | 四位数年份 |
 /// | `%y` | 两位数年份 |
 /// | `%m` | 月份 |
@@ -36,16 +35,19 @@
 /// | `%u` | 距上条日志的纳秒间隔 |
 /// | `%^` / `%$` | 颜色范围起止 |
 /// | `%%` | 字面量 `%` |
-/// | `%&` | 所有 MDC 键值对（尚未实现，目前仅占位） |
+/// | `%&` | 所有 键值对 |
 /// | `%+` | 默认格式 |
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PatternCharacter {
     /// 无特殊作用，解析到这个会报错。
+    #[doc(hidden)]
     Void,
     /// %v  实际的日志消息文本。
     Message,
     /// %n  logger 名。
     LoggerName,
+    /// %N  sink 名。
+    SinkName,
     /// %l  小写日志级别。
     LevelLower,
     /// %L  大写日志级别。
@@ -54,16 +56,12 @@ pub enum PatternCharacter {
     ThreadId,
     /// %P  进程ID。
     ProcessId,
-    /// %@  源文件位置。
-    SourceLocation,
+    /// %@  模块路径。
+    ModulePath,
     /// %s  源文件名。
     SourceFile,
-    /// %g  源文件的短文件名。
-    SourceShortFile,
     /// %#  源码行号。
     Line,
-    /// %!  源码函数名。
-    FuncName,
     /// %Y  四位数年份。
     Year4,
     /// %y  两位数年份。
@@ -104,9 +102,8 @@ pub enum PatternCharacter {
     StopColorRange,
     /// %%  字面量。
     Literal(char),
-    /// %&  所有 MDC 键值对。
-    /// TODO: 该方法现在还没有实现。
-    AllMappedDiagnosticContext,
+    /// %&  所有 键值对。
+    AllKv,
     /// %+  默认格式。
     DefaultFormat,
 }

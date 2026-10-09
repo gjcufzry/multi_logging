@@ -30,7 +30,7 @@ pub trait Formatter: Send + Sync {
     /// # Note
     ///
     /// - 该方法将会被 [`log!`](log::log!) 自动调用。
-    fn format(&self, record: &Record) -> String;
+    fn format(&self, record: &Record, sink_name: &str) -> String;
 
     /// 设置不同的日志等级的日志在终端上显示时的颜色。
     ///

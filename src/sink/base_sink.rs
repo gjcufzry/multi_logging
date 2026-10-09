@@ -69,13 +69,13 @@ where
             return Ok(());
         }
 
-        let format_res = self.formatter.format(record);
+        let format_res = self.formatter.format(record, self.name());
         let _mutex = self.mutex.may_mutex_lock();
         // SAFETY: 已经获取了（可能存在的）锁，根据使用场景不同，这么做已经安全了。
         let res = SinkError::try_with_source(SinkErrorKinds::WriteError, unsafe {
             writeln!(*self.inner.get(), "{}", format_res)
         });
-        crate::util::dispatcher::release_string(format_res);
+        crate::global::release_string(format_res);
         res
     }
 

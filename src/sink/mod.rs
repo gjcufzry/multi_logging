@@ -2,15 +2,25 @@
 
 pub mod base_sink;
 pub mod file_sink;
+pub mod flush_sink;
 pub mod hook_sink;
+pub mod multi_sink;
 pub mod null_sink;
+pub mod rotate_sink;
 pub mod stderr_sink;
 pub mod stdout_sink;
 
+#[doc(inline)]
 pub use file_sink::{FileSinkMT, FileSinkST};
+#[doc(inline)]
+pub use flush_sink::FlushSink;
+#[doc(inline)]
 pub use hook_sink::HookSink;
+#[doc(inline)]
 pub use null_sink::NullSink;
+#[doc(inline)]
 pub use stderr_sink::{StderrSinkMT, StderrSinkST};
+#[doc(inline)]
 pub use stdout_sink::{StdoutSinkMT, StdoutSinkST};
 
 use crate::util::{Record, errors::SinkError};
@@ -31,7 +41,7 @@ pub trait Sink: Send + Sync {
 }
 
 /// [`Sink`] 的 [`Result`]返回值 别名。
-pub(crate) type SinkResult<Ret> = Result<Ret, SinkError>;
+pub type SinkResult<Ret> = Result<Ret, SinkError>;
 
 /// 默认缓冲区大小。
 pub const DEFAULT_BUFFER_SIZE: usize = 1024 * 16;

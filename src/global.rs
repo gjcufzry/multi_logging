@@ -1,0 +1,145 @@
+//! 一些全局函数及对象。
+use std::sync::Arc;
+
+use crate::{
+    fmt::{DefaultFormatter, Formatter},
+    logger::Logger,
+    sink::Sink,
+    util::dispatcher::GLOBAL_DISPATCHER,
+};
+
+/// 阻塞当前线程，等待 [`AsyncLogger`] 的配套线程完成所有任务并加入。
+///
+/// [`AsyncLogger`]: crate::logger::async_logger::AsyncLogger
+#[inline(always)]
+pub fn exit() {
+    GLOBAL_DISPATCHER.thread_pool.exit_and_wait();
+}
+
+/// 使用注册 [`Sink`] 实例 的名字寻找对应的对象。
+///
+/// 如果没有注册到 `全局调度器` 或者没有该名字，则返回 [`None`]。
+#[inline(always)]
+pub fn get_sink(name: impl AsRef<str>) -> Option<Arc<dyn Sink>> {
+    GLOBAL_DISPATCHER
+        .sinks
+        .read()
+        .unwrap()
+        .get(name.as_ref())
+        .cloned()
+}
+
+/// 使用注册 [`Sink`] 实例 的名字寻找并删除对应的对象。
+///
+/// 如果没有注册到 `全局调度器` 或者没有该名字，则返回 [`None`]。
+///
+/// 注意，这么做并不会使得该 sink 被禁用，只是将其从 `全局调度器` 中移除。
+#[inline(always)]
+pub fn remove_sink(name: impl AsRef<str>) -> Option<Arc<dyn Sink>> {
+    GLOBAL_DISPATCHER
+        .sinks
+        .write()
+        .unwrap()
+        .remove(name.as_ref())
+}
+
+/// 向 `全局调度器` 注册一个 [`Sink`] 对象。
+///
+/// 如果已有一个同名对象，则将 sink 以 [`Err`] 返回。
+#[inline(always)]
+pub fn register_sink(sink: Arc<dyn Sink>) -> Result<(), Arc<dyn Sink>> {
+    if sink.name() == crate::util::DEFAULT_NULL_NAME {
+        return Err(sink);
+    }
+    match GLOBAL_DISPATCHER
+        .sinks
+        .write()
+        .unwrap()
+        .entry(sink.name().into())
+    {
+        std::collections::hash_map::Entry::Occupied(_) => Err(sink),
+        std::collections::hash_map::Entry::Vacant(vacant_entry) => {
+            vacant_entry.insert(sink);
+            Ok(())
+        }
+    }
+}
+
+/// 使用注册 [`Logger`] 实例 的名字寻找对应的对象。
+///
+/// 如果没有注册到 `全局调度器` 或者没有该名字，则返回 [`None`]。
+#[inline(always)]
+pub fn get_logger(name: impl AsRef<str>) -> Option<Arc<dyn Logger>> {
+    GLOBAL_DISPATCHER
+        .loggers
+        .read()
+        .unwrap()
+        .get(name.as_ref())
+        .cloned()
+}
+
+/// 使用注册 [`Logger`] 实例 的名字寻找并删除对应的对象。
+///
+/// 如果没有注册到 `全局调度器` 或者没有该名字，则返回 [`None`]。
+///
+/// 注意，这么做并不会使得该 logger 被禁用，只是将其从 `全局调度器` 中移除。
+#[inline(always)]
+pub fn remove_logger(name: impl AsRef<str>) -> Option<Arc<dyn Logger>> {
+    GLOBAL_DISPATCHER
+        .loggers
+        .write()
+        .unwrap()
+        .remove(name.as_ref())
+}
+
+/// 向 `全局调度器` 注册一个 [`Sink`] 对象。
+///
+/// 如果已有一个同名对象，则将 sink 以 [`Err`] 返回。
+#[inline(always)]
+pub fn register_logger(logger: Arc<dyn Logger>) -> Result<(), Arc<dyn Logger>> {
+    match GLOBAL_DISPATCHER
+        .loggers
+        .write()
+        .unwrap()
+        .entry(logger.name().into())
+    {
+        std::collections::hash_map::Entry::Occupied(_) => Err(logger),
+        std::collections::hash_map::Entry::Vacant(vacant_entry) => {
+            vacant_entry.insert(logger);
+            Ok(())
+        }
+    }
+}
+
+/// 获取缓冲池中的一个 [`String`]。
+///
+/// 所有返回的 [`String`] 都是已清空的。
+///
+/// 建议在使用完后放回池中。
+#[inline(always)]
+pub fn acquire_string() -> String {
+    GLOBAL_DISPATCHER.object_pool.acquire_string()
+}
+
+/// 将一个 [`String`] 放回全局对象池中。
+///
+/// 如果池已满，将会动态丢弃。
+#[inline(always)]
+pub fn release_string(mut rel: String) {
+    rel.clear();
+    GLOBAL_DISPATCHER.object_pool.release_string(rel)
+}
+
+/// 设置全局默认的格式化器的格式串。
+#[inline(always)]
+pub fn set_global_format(pattern: impl AsRef<str>) -> Result<(), crate::util::errors::ParseError> {
+    GLOBAL_DISPATCHER
+        .global_formatter
+        .set_format(pattern.as_ref().to_string())
+}
+
+/// 获取全局格式化器实例。
+#[inline(always)]
+pub fn get_global_formatter() -> Arc<DefaultFormatter> {
+    GLOBAL_DISPATCHER.global_formatter.clone()
+}

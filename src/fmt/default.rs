@@ -19,7 +19,22 @@ use super::dictionary::*;
 /// ``` text
 /// [2026-08-27 09:39:34] [INFO]: some message.
 /// ```
+///
+/// 如果使用了 `kv` feature，还会自动在末尾添加所有键值对的显示。
+#[cfg(not(feature = "kv"))]
 pub const DEFAULT_PATTERN_STRING: &str = "[%Y-%m-%d %H:%M:%S] [%L]: %v";
+
+/// 默认的格式串。
+///
+/// 可以使用 "%+" 格式化参数, 同样也可以使用 [`Default`] 提供的方法构造.
+/// 格式化结果是这样:
+/// ``` text
+/// [2026-08-27 09:39:34] [INFO]: some message.
+/// ```
+///
+/// 如果使用了 `kv` feature，还会自动在末尾添加所有键值对的显示。
+#[cfg(feature = "kv")]
+pub const DEFAULT_PATTERN_STRING: &str = "[%Y-%m-%d %H:%M:%S] [%L]: %v %&";
 
 /// 保存不同 [`Level`](log::Level) 对应的终端颜色。
 pub(crate) struct LevelColor {
@@ -63,13 +78,13 @@ impl Default for LevelColor {
 }
 
 /// 默认的格式化器，不直接支持终端颜色显示。
-/// 
+///
 /// 支持的格式串详见 [`PatternCharacter`]。
-/// 
+///
 /// # Example
 /// ```
 /// use multi_logging::fmt::DefaultFormatter;
-/// 
+///
 /// let formatter = DefaultFormatter::new("[%Y-%m-%d %H:%M:%S] [%L]: %v");
 /// ```
 pub struct DefaultFormatter {

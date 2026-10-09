@@ -1,8 +1,8 @@
 macro_rules! impl_format {
     ({$($self:tt)*}, $start_color_range:path, $end_color_range:path) => {
         #[inline]
-        fn format(&self, record: &crate::util::Record) -> String {
-            let mut buf = crate::util::dispatcher::acquire_string();
+        fn format(&self, record: &crate::util::Record, sink_name: &str) -> String {
+            let mut buf = crate::global::acquire_string();
             let sys_time =
                 SystemTime::UNIX_EPOCH + Duration::from_nanos_u128(record.time_stamp_nano());
             let time =
@@ -12,12 +12,15 @@ macro_rules! impl_format {
 
             for pattern in self$($self)*.pattern.read().unwrap().iter() {
                 match pattern {
-                    PatternCharacter::Void => unreachable!(), // 已经在初始化时排除。
+                    PatternCharacter::Void => {core::hint::cold_path(); unreachable!()} // 已经在初始化时排除。
                     PatternCharacter::Message => {
                         let _ = write!(buf, "{}", record.log_detail());
                     }
                     PatternCharacter::LoggerName => {
                         buf.push_str(record.logger_name());
+                    }
+                    PatternCharacter::SinkName => {
+                        buf.push_str(sink_name);
                     }
                     PatternCharacter::LevelLower => {
                         buf.push_str(LOG_LEVEL_NAMES_LOWER[record.level() as usize]);
@@ -26,18 +29,15 @@ macro_rules! impl_format {
                         buf.push_str(record.level().as_str());
                     }
                     PatternCharacter::ThreadId => {
-                        let _ = write!(buf, "{:?}", record.thread_id());
+                        let _ = write!(buf, "{}", record.thread_id());
                     }
                     PatternCharacter::ProcessId => {
                         let _ = write!(buf, "{}", record.process_id());
                     }
-                    PatternCharacter::SourceLocation => {
+                    PatternCharacter::ModulePath => {
                         buf.push_str(record.module_path().unwrap_or("?"));
                     }
                     PatternCharacter::SourceFile => {
-                        buf.push_str(record.file().unwrap_or("?"));
-                    }
-                    PatternCharacter::SourceShortFile => {
                         buf.push_str(record.file().unwrap_or("?"));
                     }
                     PatternCharacter::Line => {
@@ -47,7 +47,6 @@ macro_rules! impl_format {
                             buf.push('?');
                         }
                     }
-                    PatternCharacter::FuncName => unimplemented!(),
                     PatternCharacter::Year4 => {
                         let _ = write!(buf, "{}", YEAR4[time.year() as usize - 1970]);
                     }
@@ -94,7 +93,7 @@ macro_rules! impl_format {
                     PatternCharacter::UnixTimestamp => {
                         let _ = write!(buf, "{}", time.unix_timestamp());
                     }
-                    PatternCharacter::StandardDateTime => unreachable!(), // 在初始化阶段就被替换。
+                    PatternCharacter::StandardDateTime => {core::hint::cold_path(); unreachable!()} // 在初始化阶段就被替换。
                     PatternCharacter::ElapsedMicroseconds => {
                         let _ = write!(
                             buf,
@@ -120,10 +119,13 @@ macro_rules! impl_format {
                     PatternCharacter::Literal(c) => {
                         buf.push(*c);
                     }
-                    PatternCharacter::AllMappedDiagnosticContext => {
-                        unimplemented!("将会围绕 log 库的 kv 模块实现。")
+                    #[cfg(feature = "kv")]
+                    PatternCharacter::AllKv => {
+                        let _ = write!(buf, "{}", record.key_values());
                     }
-                    PatternCharacter::DefaultFormat => unreachable!(), // 在初始化阶段就被替换。
+                    #[cfg(not(feature = "kv"))]
+                    PatternCharacter::AllKv => {} // 跳过。
+                    PatternCharacter::DefaultFormat => {core::hint::cold_path(); unreachable!()} // 在初始化阶段就被替换。
                 }
             }
 

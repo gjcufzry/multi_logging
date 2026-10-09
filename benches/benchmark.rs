@@ -1,4 +1,44 @@
+//! 性能测试
+//!
+//! # Device
+//! - cpu: Intel(R) Core(TM) i5-10210U CPU @ 1.60GHz   2.11 GHz
+//! - system: Windwos 11 23H2
+//! - toolchain: stable-x86_64-pc-windows-msvc 1.96.0
+//! - version: 0.1.2
+//!
+//! # Result
+//! ``` bash
+//! cargo bench -p multi_logging
+//! ```
+//! ``` text
+//! Running benches\benchmark.rs (target\release\deps\benchmark-47a1a207899a1872.exe)
+//! frontend/unbounded_null time:   [29.982 ms 30.081 ms 30.170 ms]
+//!                         thrpt:  [3.3145 Melem/s 3.3243 Melem/s 3.3353 Melem/s]
+//!                  change:
+//!                         time:   [−3.8322% +1.8780% +7.3706%] (p = 0.50 > 0.05)
+//!                         thrpt:  [−6.8646% −1.8434% +3.9849%]
+//!                         No change in performance detected.
+//! Found 5 outliers among 20 measurements (25.00%)
+//!   4 (20.00%) low severe
+//!   1 (5.00%) high mild
+//! frontend/bounded_100k_null
+//!                         time:   [23.437 ms 25.521 ms 27.636 ms]
+//!                         thrpt:  [3.6185 Melem/s 3.9184 Melem/s 4.2667 Melem/s]
+//!                  change:
+//!                         time:   [−10.319% −1.2522% +8.5277%] (p = 0.80 > 0.05)
+//!                         thrpt:  [−7.8576% +1.2680% +11.506%]
+//!                         No change in performance detected.
+//! end_to_end/bounded_file_4mb_buffer
+//!                         time:   [100.97 ms 101.54 ms 102.14 ms]
+//!                         
+//!                         thrpt:  [979.02 Kelem/s 984.83 Kelem/s 990.36 Kelem/s]
+//!                  change:
+//!                         time:   [−2.3909% −0.6307% +0.9131%] (p = 0.49 > 0.05)
+//!                         thrpt:  [−0.9049% +0.6347% +2.4495%]
+//!                         No change in performance detected.
+//! ```
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
+use multi_logging::fmt::DefaultFormatter;
 use multi_logging::logger::Logger;
 use multi_logging::logger::async_logger::AsyncLogger;
 use multi_logging::sink::file_sink::FileSinkST;
@@ -26,11 +66,15 @@ fn create_file_logger(bounded: bool, queue_size: usize, buffer_size: usize) -> A
             .name("file_sink")
             .path("bench.log")
             .buffer_size(buffer_size)
+            .formatter(Arc::new(
+                DefaultFormatter::new("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l]: %v").unwrap(),
+            ))
             .build()
             .unwrap(),
     );
     Arc::new(
         AsyncLogger::builder()
+            .name("async_logger")
             .add_sink(sink)
             .bound(bounded)
             .drop_when_blocked(false)
@@ -51,7 +95,7 @@ fn run_multi_thread_bench(
             let l = logger.clone();
             s.spawn(move || {
                 for i in 0..per_thread {
-                    // 使用 black_box 防止优化，同时消息内容与 spdlog 相同
+                    // 消息内容与 spdlog 相同
                     log::info!(
                         logger: *l,
                         "Hello logger: msg number {}",

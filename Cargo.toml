@@ -9,8 +9,11 @@ documentation = "https://docs.rs/multi_logging"
 keywords = ["log", "logger"]
 readme = "README.md"
 
+[features]
+kv = ["log/kv"]
+
 [dependencies]
-log = { version = "0.4.33", features = ["std"] }
+log = { version = "0.4.33" }
 crossbeam = "0.8.4"
 time = { version = "0.3.55", features = ["local-offset"] }
 

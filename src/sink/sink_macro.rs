@@ -21,7 +21,7 @@ macro_rules! impl_console_sink {
                 Self {
                     name: crate::util::DEFAULT_NULL_NAME.into(),
                     buffer_size: $crate::sink::DEFAULT_BUFFER_SIZE,
-                    formatter: $crate::util::dispatcher::get_global_formatter(),
+                    formatter: $crate::global::get_global_formatter(),
                 }
             }
 

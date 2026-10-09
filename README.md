@@ -30,7 +30,6 @@
 multi_logging = "0.1"
 log = "0.4"
 ```
-- `log` 依赖是可选的，因为其已经在 crate::log 重新导出。
 
 ## 🚀 快速开始
 
@@ -39,7 +38,6 @@ log = "0.4"
 可以直接将 logger 注册为 [`log`] 中的全局对象。
 
 ```rust
-use multi_logging::log;
 use multi_logging::logger::{AsyncLogger, Logger};
 use multi_logging::sink::FileSinkMT;
 use std::sync::Arc;
@@ -72,12 +70,7 @@ fn main() {
     log::info!(logger: *logger, "Hello, world!");
     log::info!(logger: *logger, "Number: {}", 42);
 
-    // 5. 可以将 logger 注册为 log crate 的全局 logger
-    let _ = log::set_boxed_logger(Box::new(logger.clone()));
-
-    log::info!("The global logger send.");
-
-    // 6.如果使用异步 logger，最好在程序结束时显式刷新并等待日志落盘。
+    // 5.如果使用异步 logger，最好在程序结束时显式刷新并等待日志落盘。
     logger.flush_and_wait();
 }
 ```
@@ -90,7 +83,7 @@ fn main() {
 ```rust
 use multi_logging::logger::{AsyncLogger, Logger};
 use multi_logging::sink::FileSinkMT;
-use multi_logging::{log, get_logger, register_logger, register_sink, set_global_format};
+use multi_logging::global::{get_logger, register_logger, register_sink, set_global_format};
 use std::sync::Arc;
 
 fn main() {
