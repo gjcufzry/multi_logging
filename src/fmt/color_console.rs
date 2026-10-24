@@ -1,5 +1,5 @@
 use crate::fmt::{
-    Formatter, ParseResult, default::DefaultFormatter, dictionary::*, parse::PatternCharacter,
+    Formatter, ParseResult, PatternCharacter, default::DefaultFormatter, dictionary::*,
 };
 
 use std::{
@@ -8,7 +8,7 @@ use std::{
 };
 
 /// 可以使用 ANSI 转义符进行颜色输出的格式化器。
-/// 
+///
 /// 支持的格式串详见 [`PatternCharacter`]。
 ///
 /// # Example

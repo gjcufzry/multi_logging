@@ -1,14 +1,17 @@
 //! 日志输出支持。
 
-pub mod base_sink;
-pub mod file_sink;
-pub mod flush_sink;
-pub mod hook_sink;
-pub mod multi_sink;
-pub mod null_sink;
-pub mod rotate_sink;
-pub mod stderr_sink;
-pub mod stdout_sink;
+mod base_sink;
+mod file_sink;
+mod flush_sink;
+mod hook_sink;
+mod null_sink;
+mod rotate_sink;
+mod stderr_sink;
+mod stdout_sink;
+
+mod multi;
+
+use std::any::Any;
 
 #[doc(inline)]
 pub use file_sink::{FileSinkMT, FileSinkST};
@@ -19,6 +22,8 @@ pub use hook_sink::HookSink;
 #[doc(inline)]
 pub use null_sink::NullSink;
 #[doc(inline)]
+pub use rotate_sink::RotateSink;
+#[doc(inline)]
 pub use stderr_sink::{StderrSinkMT, StderrSinkST};
 #[doc(inline)]
 pub use stdout_sink::{StdoutSinkMT, StdoutSinkST};
@@ -26,7 +31,7 @@ pub use stdout_sink::{StdoutSinkMT, StdoutSinkST};
 use crate::util::{Record, errors::SinkError};
 
 /// 用于输出格式化之后的日志到指定的位置。
-pub trait Sink: Send + Sync {
+pub trait Sink: Send + Sync + Any {
     /// 将仅格式化之后的日志以及元数据输出。
     fn log(&self, record: &Record) -> SinkResult<()>;
 
@@ -44,4 +49,40 @@ pub trait Sink: Send + Sync {
 pub type SinkResult<Ret> = Result<Ret, SinkError>;
 
 /// 默认缓冲区大小。
-pub const DEFAULT_BUFFER_SIZE: usize = 1024 * 16;
+pub(crate) const DEFAULT_BUFFER_SIZE: usize = 1024 * 16;
+
+impl<T: Sink + ?Sized> Sink for std::sync::Arc<T> {
+    fn log(&self, record: &Record) -> SinkResult<()> {
+        (**self).log(record)
+    }
+
+    fn flush(&self) -> SinkResult<()> {
+        (**self).flush()
+    }
+
+    fn name(&self) -> &str {
+        (**self).name()
+    }
+
+    fn set_level(&self, level: log::LevelFilter) {
+        (**self).set_level(level);
+    }
+}
+
+impl<T: Sink + ?Sized> Sink for Box<T> {
+    fn log(&self, record: &Record) -> SinkResult<()> {
+        (**self).log(record)
+    }
+
+    fn flush(&self) -> SinkResult<()> {
+        (**self).flush()
+    }
+
+    fn name(&self) -> &str {
+        (**self).name()
+    }
+
+    fn set_level(&self, level: log::LevelFilter) {
+        (**self).set_level(level);
+    }
+}

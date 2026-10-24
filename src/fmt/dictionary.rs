@@ -1,6 +1,6 @@
 //! 预处理字典。
 
-use crate::fmt::parse::PatternCharacter;
+use super::PatternCharacter;
 
 /// 索引 = ASCII码 - 32，因此 `PATTERN_CHARS[0]` 对应 `' '`，`PATTERN_CHARS[90]` 对应 `'z'`。
 pub(crate) const PATTERN_CHARS: [PatternCharacter; 91] = [

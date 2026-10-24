@@ -4,6 +4,7 @@ use std::{
     collections::VecDeque,
     fmt::{Debug, Display},
     sync::{Arc, Barrier},
+    time::Duration,
 };
 
 use crossbeam::{
@@ -52,10 +53,6 @@ pub struct AsyncLogger {
 }
 
 impl Logger for AsyncLogger {
-    fn set_level(&self, level: log::LevelFilter) {
-        self.max_level.store(level);
-    }
-
     fn add_sink(&self, sink: Arc<dyn Sink>) {
         self.send_command(LogCommand::AddSink(sink));
     }
@@ -64,16 +61,8 @@ impl Logger for AsyncLogger {
         self.send_command(LogCommand::RemoveSink(name));
     }
 
-    fn enabled(&self, level: log::Level, _target: &str) -> bool {
-        self.max_level.load() >= level
-    }
-
-    fn log(&self, record: crate::util::Record) {
+    fn log_once(&self, record: crate::util::Record) {
         self.send_command(LogCommand::LogOnce(record));
-    }
-
-    fn flush(&self) {
-        self.send_command(LogCommand::Flush);
     }
 
     fn flush_and_wait(&self) {
@@ -84,6 +73,20 @@ impl Logger for AsyncLogger {
 
     fn name(&self) -> &str {
         &self.name
+    }
+}
+
+impl log::Log for AsyncLogger {
+    fn enabled(&self, metadata: &log::Metadata) -> bool {
+        self.max_level.load() >= metadata.level()
+    }
+
+    fn flush(&self) {
+        self.send_command(LogCommand::Flush);
+    }
+
+    fn log(&self, record: &log::Record) {
+        self.log_once(Record::new(record, self.name()));
     }
 }
 
@@ -103,6 +106,8 @@ pub struct AsyncLoggerBuilder {
     pub error_handle: Option<fn(LoggerError) -> bool>,
     /// 在队列阻塞时是否丢弃日志。
     pub drop_when_blocked: bool,
+    /// 日志的刷新间隔。
+    pub flush_interval: Duration,
 }
 
 impl AsyncLogger {
@@ -132,6 +137,7 @@ impl AsyncLoggerBuilder {
             sinks: Vec::new(),
             error_handle: None,
             drop_when_blocked: true,
+            flush_interval: Duration::from_secs(1),
         }
     }
 
@@ -139,7 +145,7 @@ impl AsyncLoggerBuilder {
     ///
     /// 默认为 "__NULL_"。
     #[inline]
-    pub fn name(&mut self, name: impl AsRef<str>) -> &mut Self {
+    pub fn name(mut self, name: impl AsRef<str>) -> Self {
         self.name = name.as_ref().into();
         self
     }
@@ -148,35 +154,35 @@ impl AsyncLoggerBuilder {
     ///
     /// 默认为 [`log::LevelFilter::Off`]。
     #[inline]
-    pub fn level(&mut self, level: log::LevelFilter) -> &mut Self {
+    pub fn level(mut self, level: log::LevelFilter) -> Self {
         self.level = level;
         self
     }
 
     /// 异步队列是否有界。
     #[inline]
-    pub fn bound(&mut self, bound: bool) -> &mut Self {
+    pub fn bound(mut self, bound: bool) -> Self {
         self.bound = bound;
         self
     }
 
     /// 异步队列大小。
     #[inline]
-    pub fn chanel_size(&mut self, size: usize) -> &mut Self {
+    pub fn chanel_size(mut self, size: usize) -> Self {
         self.chanel_size = size;
         self
     }
 
     /// 添加多个 [`Sink`] 实例。
     #[inline]
-    pub fn add_sinks(&mut self, sinks: impl IntoIterator<Item = Arc<dyn Sink>>) -> &mut Self {
+    pub fn add_sinks(mut self, sinks: impl IntoIterator<Item = Arc<dyn Sink>>) -> Self {
         self.sinks.extend(sinks);
         self
     }
 
     /// 添加单个 [`Sink`] 实例。
     #[inline]
-    pub fn add_sink(&mut self, sink: Arc<dyn Sink>) -> &mut Self {
+    pub fn add_sink(mut self, sink: Arc<dyn Sink>) -> Self {
         self.sinks.push(sink);
         self
     }
@@ -185,15 +191,22 @@ impl AsyncLoggerBuilder {
     ///
     /// 返回值为 `false` 时，程序将会 Panic。
     #[inline]
-    pub fn error_handle(&mut self, handle: fn(LoggerError) -> bool) -> &mut Self {
+    pub fn error_handle(mut self, handle: fn(LoggerError) -> bool) -> Self {
         self.error_handle = Some(handle);
         self
     }
 
     /// 在队列阻塞时是否丢弃日志。
     #[inline]
-    pub fn drop_when_blocked(&mut self, option: bool) -> &mut Self {
+    pub fn drop_when_blocked(mut self, option: bool) -> Self {
         self.drop_when_blocked = option;
+        self
+    }
+
+    /// 刷新间隔。
+    #[inline]
+    pub fn flush_interval(mut self, interval: Duration) -> Self {
+        self.flush_interval = interval;
         self
     }
 
@@ -237,6 +250,7 @@ pub(crate) struct AsyncHandleThread {
     command_buf: VecDeque<LogCommand>,
     rec: Receiver<LogCommand>,
     error_handle: Option<fn(LoggerError) -> bool>,
+    flush_interval: Duration,
 }
 
 impl AsyncHandleThread {
@@ -248,6 +262,7 @@ impl AsyncHandleThread {
         };
         let sinks = builder.sinks.clone();
         let error_handle = builder.error_handle;
+        let flush_interval = builder.flush_interval;
 
         let handle = std::thread::spawn(move || {
             let mut data = Self {
@@ -255,6 +270,7 @@ impl AsyncHandleThread {
                 command_buf: VecDeque::with_capacity(128),
                 rec: rx,
                 error_handle,
+                flush_interval,
             };
             data.work();
         });
@@ -269,28 +285,37 @@ impl AsyncHandleThread {
 
     #[inline(always)]
     fn work(&mut self) {
-        while let Ok(command) = self.rec.recv() {
-            self.command_buf.push_back(command);
-            for _ in 0..127 {
-                // 本次循环尝试一次性获取 128 条命令。
-                let Ok(com) = self.rec.try_recv() else {
-                    continue;
-                };
-                self.command_buf.push_back(com);
-            }
-            while let Some(command) = self.command_buf.pop_front() {
-                match command {
-                    LogCommand::LogOnce(record) => self.log_once(record),
-                    LogCommand::AddSink(sink) => self.add_sink(sink),
-                    LogCommand::RemoveSink(name) => self.remove_sink(&name),
-                    LogCommand::Flush => self.flsuh(),
-                    LogCommand::Exit => {
-                        self.flsuh();
-                        return;
+        loop {
+            match self.rec.recv_timeout(self.flush_interval) {
+                Ok(command) => {
+                    self.command_buf.push_back(command);
+                    for _ in 0..127 {
+                        // 本次循环尝试一次性获取 128 条命令。
+                        let Ok(com) = self.rec.try_recv() else {
+                            continue;
+                        };
+                        self.command_buf.push_back(com);
                     }
-                    LogCommand::FlushAndWait(b) => self.flush_and_wait(b),
+                    while let Some(command) = self.command_buf.pop_front() {
+                        match command {
+                            LogCommand::LogOnce(record) => self.log_once(record),
+                            LogCommand::AddSink(sink) => self.add_sink(sink),
+                            LogCommand::RemoveSink(name) => self.remove_sink(&name),
+                            LogCommand::Flush => self.flush(),
+                            LogCommand::Exit => {
+                                self.flush();
+                                return;
+                            }
+                            LogCommand::FlushAndWait(b) => self.flush_and_wait(b),
+                        }
+                    }
                 }
-            }
+                Err(crossbeam::channel::RecvTimeoutError::Disconnected) => return,
+                Err(crossbeam::channel::RecvTimeoutError::Timeout) => {
+                    self.flush();
+                    continue;
+                }
+            };
         }
     }
 
@@ -318,7 +343,7 @@ impl AsyncHandleThread {
     }
 
     #[inline(always)]
-    fn flsuh(&self) {
+    fn flush(&self) {
         for sink in &self.sinks {
             self.try_handle_error(LoggerErrorKind::FlushError, sink.flush());
         }
@@ -326,7 +351,7 @@ impl AsyncHandleThread {
 
     #[inline(always)]
     fn flush_and_wait(&self, b: Arc<Barrier>) {
-        self.flsuh();
+        self.flush();
         let _ = b.wait();
     }
 
@@ -350,7 +375,3 @@ impl AsyncHandleThread {
         }
     }
 }
-
-include!("./impl_trait_macros.rs");
-
-impl_log_trait!(AsyncLogger);

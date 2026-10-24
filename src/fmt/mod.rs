@@ -1,19 +1,128 @@
 //! 格式化支持。
 
 pub(crate) mod ansi_color;
-pub mod color_console;
-pub mod default;
+pub(crate) mod color_console;
+pub(crate) mod default;
 pub(crate) mod dictionary;
-pub mod parse;
+
+use std::any::Any;
 
 use crate::util::{Record, errors::ParseError};
 
+#[doc(inline)]
 pub use color_console::ColorFormatter;
+#[doc(inline)]
 pub use default::DefaultFormatter;
-pub use parse::PatternCharacter;
 
+/// 表示跟在 `%` 后面的单个模式字符的含义。
+///
+/// # Detail
+///
+/// | 占位符 | 说明 |
+/// |---|---|
+/// | `%v` | 实际的日志消息文本 |
+/// | `%n` | logger 名 |
+/// | `%N` | sink 名 |
+/// | `%l` | 小写日志级别 |
+/// | `%L` | 大写日志级别 |
+/// | `%t` | 线程 ID |
+/// | `%P` | 进程 ID |
+/// | `%@` | 模块路径 |
+/// | `%s` | 源文件名 |
+/// | `%#` | 源码行号 |
+/// | `%Y` | 四位数年份 |
+/// | `%y` | 两位数年份 |
+/// | `%m` | 月份 |
+/// | `%d` | 天数 |
+/// | `%H` | 24 小时制的小时 |
+/// | `%I` | 12 小时制的小时 |
+/// | `%M` | 分钟 |
+/// | `%S` | 秒数 |
+/// | `%e` | 毫秒 |
+/// | `%f` | 微秒 |
+/// | `%F` | 纳秒 |
+/// | `%p` | AM/PM 标识 |
+/// | `%z` | UTC 时区偏移量 |
+/// | `%E` | UTC 时间戳 |
+/// | `%c` | 标准日期时间 |
+/// | `%i` | 距上条日志的微秒间隔 |
+/// | `%u` | 距上条日志的纳秒间隔 |
+/// | `%^` / `%$` | 颜色范围起止 |
+/// | `%%` | 字面量 `%` |
+/// | `%&` | 所有 键值对 |
+/// | `%+` | 默认格式 |
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PatternCharacter {
+    /// 无特殊作用，解析到这个会报错。
+    #[doc(hidden)]
+    Void,
+    /// %v  实际的日志消息文本。
+    Message,
+    /// %n  logger 名。
+    LoggerName,
+    /// %N  sink 名。
+    SinkName,
+    /// %l  小写日志级别。
+    LevelLower,
+    /// %L  大写日志级别。
+    LevelUpper,
+    /// %t  线程ID。
+    ThreadId,
+    /// %P  进程ID。
+    ProcessId,
+    /// %@  模块路径。
+    ModulePath,
+    /// %s  源文件名。
+    SourceFile,
+    /// %#  源码行号。
+    Line,
+    /// %Y  四位数年份。
+    Year4,
+    /// %y  两位数年份。
+    Year2,
+    /// %m  月份。
+    Month,
+    /// %d  天数。
+    Day,
+    /// %H  24小时制的小时。
+    Hour24,
+    /// %I  12小时制的小时。
+    Hour12,
+    /// %M  分钟。
+    Minute,
+    /// %S  秒数。
+    Second,
+    /// %e  毫秒。
+    Millisecond,
+    /// %f  微秒。
+    Microsecond,
+    /// %F  纳秒。
+    Nanosecond,
+    /// %p  AM/PM 标识。
+    AMPM,
+    /// %z  UTC 时区偏移量。
+    TimezoneOffset,
+    /// %E  UTC 时间戳。
+    UnixTimestamp,
+    /// %c  标准日期时间。
+    StandardDateTime,
+    /// %i  距上条日志的微秒间隔。
+    ElapsedMicroseconds,
+    /// %u  距上条日志的纳秒间隔。
+    ElapsedNanoseconds,
+    /// %^  颜色范围开始。
+    StartColorRange,
+    /// %$  颜色范围结束。
+    StopColorRange,
+    /// %%  字面量。
+    Literal(char),
+    /// %&  所有 键值对。
+    AllKv,
+    /// %+  默认格式。
+    DefaultFormat,
+}
 /// 格式化器 api。
-pub trait Formatter: Send + Sync {
+pub trait Formatter: Send + Sync + Any {
     /// 设置格式化字符串。
     ///
     /// # Example

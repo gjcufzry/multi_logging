@@ -59,9 +59,9 @@ where
 
 impl<Output, Mutex, Atomic> Sink for BaseSink<Output, Mutex, Atomic>
 where
-    Output: Write,
-    Mutex: MaybeMutexType<Inner = ()>,
-    Atomic: MaybeAtomicType<log::LevelFilter>,
+    Output: Write + 'static,
+    Mutex: MaybeMutexType<Inner = ()> + 'static,
+    Atomic: MaybeAtomicType<log::LevelFilter> + 'static,
 {
     #[inline]
     fn log(&self, record: &Record) -> SinkResult<()> {

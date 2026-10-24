@@ -6,7 +6,7 @@ use crossbeam::atomic::AtomicCell;
 
 use crate::fmt::ansi_color::ANSI;
 use crate::{
-    fmt::{Formatter, ParseResult, dictionary::PATTERN_CHARS, parse::PatternCharacter},
+    fmt::{Formatter, ParseResult, PatternCharacter, dictionary::PATTERN_CHARS},
     util::errors::{ParseError, ParseErrorKind},
 };
 

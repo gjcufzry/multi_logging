@@ -67,8 +67,8 @@ fn main() {
     );
 
     // 4. 记录日志
-    log::info!(logger: *logger, "Hello, world!");
-    log::info!(logger: *logger, "Number: {}", 42);
+    log::info!(logger: logger, "Hello, world!");
+    log::info!(logger: logger, "Number: {}", 42);
 
     // 5.如果使用异步 logger，最好在程序结束时显式刷新并等待日志落盘。
     logger.flush_and_wait();
@@ -108,13 +108,13 @@ fn main() {
     let _ = set_global_format("[%Y-%m-%d %H:%M:%S] [%L] %v");
 
     // 使用 log 宏即可
-    log::info!(logger: *logger, "This goes to the file");
+    log::info!(logger: logger, "This goes to the file");
 
     // 获取注册的 logger 的相同实例
     let same_logger = get_logger("global").unwrap();
 
     // 可以正常发送日志。
-    log::info!(logger: *same_logger, "The same_logger send to the same file.");
+    log::info!(logger: same_logger, "The same_logger send to the same file.");
 
     // 显式刷新缓冲。
     logger.flush_and_wait();

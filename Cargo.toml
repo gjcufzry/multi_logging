@@ -6,16 +6,16 @@ description = "一个高性能的 Rust 异步日志库，提供灵活的格式�
 license = "MIT"
 repository = "https://github.com/gjcufzry/multi_logging"
 documentation = "https://docs.rs/multi_logging"
-keywords = ["log", "logger"]
+keywords = ["log", "logger", "multi"]
 readme = "README.md"
 
 [features]
 kv = ["log/kv"]
 
 [dependencies]
-log = { version = "0.4.33" }
-crossbeam = "0.8.4"
-time = { version = "0.3.55", features = ["local-offset"] }
+log = { version = ">=0.4", features = ["std"] }
+crossbeam = ">=0.8"
+time = { version = ">=0.3", default-features = false, features = ["local-offset"] }
 
 [dev-dependencies]
 criterion = { version = "0.8", features = ["html_reports"] }

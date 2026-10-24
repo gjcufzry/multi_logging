@@ -39,10 +39,6 @@ pub struct SyncLogger {
 }
 
 impl Logger for SyncLogger {
-    fn set_level(&self, level: log::LevelFilter) {
-        self.max_level.store(level);
-    }
-
     fn add_sink(&self, sink: std::sync::Arc<dyn Sink>) {
         self.sinks.write().unwrap().push(sink);
     }
@@ -58,11 +54,7 @@ impl Logger for SyncLogger {
         self.handle_error(LoggerError::new(LoggerErrorKind::SinkNameNotFound));
     }
 
-    fn enabled(&self, level: log::Level, _target: &str) -> bool {
-        self.max_level.load() >= level
-    }
-
-    fn log(&self, record: crate::util::Record) {
+    fn log_once(&self, record: crate::util::Record) {
         for sink in self.sinks.read().unwrap().iter() {
             let _ = sink.log(&record).map_err(|_| {
                 self.handle_error(LoggerError::new(LoggerErrorKind::LogError));
@@ -70,6 +62,16 @@ impl Logger for SyncLogger {
         }
     }
 
+    fn flush_and_wait(&self) {
+        log::Log::flush(&self);
+    }
+
+    fn name(&self) -> &str {
+        &self.name
+    }
+}
+
+impl log::Log for SyncLogger {
     fn flush(&self) {
         self.sinks.read().unwrap().iter().for_each(|s| {
             let _ = s.flush().map_err(|_| {
@@ -78,12 +80,12 @@ impl Logger for SyncLogger {
         });
     }
 
-    fn flush_and_wait(&self) {
-        self.flush();
+    fn enabled(&self, metadata: &log::Metadata) -> bool {
+        self.max_level.load() >= metadata.level()
     }
 
-    fn name(&self) -> &str {
-        &self.name
+    fn log(&self, record: &log::Record) {
+        self.log_once(crate::Record::new(record, self.name()));
     }
 }
 
@@ -174,7 +176,3 @@ impl Default for SyncLoggerBuilder {
         Self::new()
     }
 }
-
-include!("./impl_trait_macros.rs");
-
-impl_log_trait!(SyncLogger);
