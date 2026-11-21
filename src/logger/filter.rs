@@ -3,12 +3,12 @@ use crate::{Record, logger::Logger};
 type FilterFnTy = Box<dyn Fn(&Record) -> bool + Send + Sync>;
 
 /// 携带过滤函数的 logger。
-pub struct Filterogger<L: Logger> {
+pub struct FilterLogger<L: Logger> {
     inner: L,
     filter_fn: FilterFnTy,
 }
 
-impl<L: Logger> Filterogger<L> {
+impl<L: Logger> FilterLogger<L> {
     /// 如果回调函数返回true，则继续包装类型的log调用，反之终止调用。
     pub fn new<F: Fn(&Record) -> bool + Send + Sync + 'static>(inner: L, filter: F) -> Self {
         Self {
@@ -27,7 +27,7 @@ impl<L: Logger> Filterogger<L> {
     }
 }
 
-impl<L: Logger> log::Log for Filterogger<L> {
+impl<L: Logger> log::Log for FilterLogger<L> {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
         self.inner.enabled(metadata)
     }
@@ -41,7 +41,7 @@ impl<L: Logger> log::Log for Filterogger<L> {
     }
 }
 
-impl<L: Logger> Logger for Filterogger<L> {
+impl<L: Logger> Logger for FilterLogger<L> {
     fn add_sink(&self, sink: std::sync::Arc<dyn crate::sink::Sink>) {
         self.inner.add_sink(sink);
     }

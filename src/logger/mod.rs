@@ -12,7 +12,7 @@ use crate::sink::Sink;
 #[doc(inline)]
 pub use async_logger::AsyncLogger;
 #[doc(inline)]
-pub use filter::Filterogger;
+pub use filter::FilterLogger;
 #[doc(inline)]
 pub use multi::MultiLogger;
 #[doc(inline)]

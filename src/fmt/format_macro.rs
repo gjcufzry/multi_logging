@@ -22,6 +22,9 @@ macro_rules! impl_format {
                     PatternCharacter::SinkName => {
                         buf.push_str(sink_name);
                     }
+                    PatternCharacter::Target => {
+                        buf.push_str(record.target());
+                    }
                     PatternCharacter::LevelLower => {
                         buf.push_str(LOG_LEVEL_NAMES_LOWER[record.level() as usize]);
                     }

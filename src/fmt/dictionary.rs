@@ -56,7 +56,7 @@ pub(crate) const PATTERN_CHARS: [PatternCharacter; 91] = [
     PatternCharacter::Void,                // 81  'Q'
     PatternCharacter::Void,                // 82  'R'
     PatternCharacter::Second,              // 83  'S'
-    PatternCharacter::Void,                // 84  'T'
+    PatternCharacter::Target,              // 84  'T'
     PatternCharacter::Void,                // 85  'U'
     PatternCharacter::Void,                // 86  'V'
     PatternCharacter::Void,                // 87  'W'

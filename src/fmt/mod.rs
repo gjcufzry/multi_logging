@@ -23,6 +23,7 @@ pub use default::DefaultFormatter;
 /// | `%v` | 实际的日志消息文本 |
 /// | `%n` | logger 名 |
 /// | `%N` | sink 名 |
+/// | `%T` | [`log::Record::target`] 的返回值 |
 /// | `%l` | 小写日志级别 |
 /// | `%L` | 大写日志级别 |
 /// | `%t` | 线程 ID |
@@ -62,6 +63,8 @@ pub enum PatternCharacter {
     LoggerName,
     /// %N  sink 名。
     SinkName,
+    /// %T  [`log::Record::target`] 的返回值。
+    Target,
     /// %l  小写日志级别。
     LevelLower,
     /// %L  大写日志级别。
