@@ -1,6 +1,7 @@
 //! 日志的用户侧接口。
 
 pub mod async_logger;
+pub mod filter;
 mod multi;
 pub mod sync_logger;
 
@@ -10,6 +11,8 @@ use crate::sink::Sink;
 
 #[doc(inline)]
 pub use async_logger::AsyncLogger;
+#[doc(inline)]
+pub use filter::Filterogger;
 #[doc(inline)]
 pub use multi::MultiLogger;
 #[doc(inline)]

@@ -121,7 +121,9 @@ macro_rules! impl_format {
                     }
                     #[cfg(feature = "kv")]
                     PatternCharacter::AllKv => {
-                        let _ = write!(buf, "{}", record.key_values());
+                        if record.key_values().len() != 0 && buf.len() != 0 && buf.as_bytes()[buf.len() - 1] != b'\n' {
+                            let _ = write!(buf, "\n{}", record.key_values());
+                        }
                     }
                     #[cfg(not(feature = "kv"))]
                     PatternCharacter::AllKv => {} // 跳过。
